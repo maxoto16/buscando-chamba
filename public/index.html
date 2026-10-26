@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#131a29">
+<title>Buscando Chamba</title>
+<meta name="description" content="Juego multijugador de 2 jugadores: recoge solicitudes de empleo en la oficina y entrégalas en tu casillero antes que tu rival.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23131a29'/%3E%3Crect x='16' y='10' width='28' height='38' rx='3' fill='%23fff'/%3E%3Crect x='20' y='15' width='20' height='6' fill='%233b82f6'/%3E%3Crect x='20' y='26' width='20' height='3' fill='%23b6bdc9'/%3E%3Crect x='20' y='33' width='14' height='3' fill='%23b6bdc9'/%3E%3Ccircle cx='42' cy='42' r='9' fill='none' stroke='%23f97316' stroke-width='4'/%3E%3Cpath d='M48 49l8 8' stroke='%23f97316' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ MENÚ ============ -->
+  <section id="screen-menu" class="screen center">
+    <div class="card menu-card">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 96 96" aria-hidden="true">
+          <g transform="rotate(-8 48 48)">
+            <rect x="18" y="8" width="46" height="62" rx="5" fill="#fff" stroke="#cbd2dc" stroke-width="2"/>
+            <rect x="25" y="16" width="32" height="9" rx="2" fill="#3b82f6"/>
+            <rect x="25" y="32" width="32" height="4" rx="2" fill="#c3cad6"/>
+            <rect x="25" y="41" width="32" height="4" rx="2" fill="#c3cad6"/>
+            <rect x="25" y="50" width="20" height="4" rx="2" fill="#c3cad6"/>
+          </g>
+          <circle cx="62" cy="62" r="16" fill="rgba(255,255,255,.55)" stroke="#f97316" stroke-width="6"/>
+          <path d="M74 74l15 15" stroke="#f97316" stroke-width="9" stroke-linecap="round"/>
+        </svg>
+        <h1>Buscando<span>Chamba</span></h1>
+        <p class="tag">Junta solicitudes de empleo por toda la oficina y entrégalas en tu casillero antes que tu rival.</p>
+      </div>
+
+      <label class="field">
+        <span>Tu nombre</span>
+        <input id="name" maxlength="12" placeholder="Ej. Angel" autocomplete="off" spellcheck="false">
+      </label>
+
+      <button id="btn-create" class="btn btn-primary">Crear sala</button>
+
+      <div class="or"><span>o únete con un código</span></div>
+
+      <div class="join-row">
+        <input id="code" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text">
+        <button id="btn-join" class="btn btn-secondary">Unirme</button>
+      </div>
+
+      <p id="menu-msg" class="msg" hidden></p>
+
+      <details class="how">
+        <summary>¿Cómo se juega?</summary>
+        <ul>
+          <li><b>Muévete</b> con <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o las flechas (en el celular, con el dedo).</li>
+          <li><b>Toca las solicitudes</b> (hojas con brillo) para recogerlas. Cargas máximo <b>5</b> a la vez.</li>
+          <li><b>Entrégalas</b> acercándote a <b>tu casillero</b> (el de tu color) para sumar puntos.</li>
+          <li>Gana quien tenga <b>más solicitudes guardadas</b> después de <b>2 minutos</b>.</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ SALA DE ESPERA ============ -->
+  <section id="screen-wait" class="screen center" hidden>
+    <div class="card wait-card">
+      <h2>Sala creada</h2>
+      <p class="sub">Pásale este código a tu rival para que se una:</p>
+      <button id="code-big" class="code-big" title="Copiar código" aria-label="Copiar código"></button>
+      <div class="wait-actions">
+        <button id="btn-copy-code" class="btn btn-secondary small">Copiar código</button>
+        <button id="btn-copy-link" class="btn btn-secondary small">Copiar enlace</button>
+        <button id="btn-share" class="btn btn-secondary small" hidden>Compartir</button>
+      </div>
+      <div class="slots">
+        <div class="slot p0"><i></i><span id="wait-n0">Tú</span></div>
+        <div class="vs">VS</div>
+        <div class="slot p1 empty"><i></i><span id="wait-n1">Esperando rival<em class="dots"></em></span></div>
+      </div>
+      <button id="btn-cancel" class="btn btn-ghost">Cancelar</button>
+    </div>
+  </section>
+
+  <!-- ============ JUEGO ============ -->
+  <section id="screen-game" class="screen game" hidden>
+    <div id="hud">
+      <div class="pbox p0"><div class="nm" id="hud-n0">—</div><div class="sc" id="hud-s0">0</div></div>
+      <div class="mid">
+        <div id="timer">2:00</div>
+        <div id="bag" aria-label="Mochila">
+          <span class="lbl">Mochila</span>
+          <i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+      <div class="pbox p1"><div class="sc" id="hud-s1">0</div><div class="nm" id="hud-n1">—</div></div>
+      <button id="btn-mute" class="icon-btn" aria-label="Sonido" title="Sonido">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path id="snd-path" fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3z"/><g id="snd-on" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18 6a8.5 8.5 0 010 12"/></g><path id="snd-off" d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" hidden/></svg>
+      </button>
+    </div>
+
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="banner" class="banner" hidden></div>
+      <div id="joy" class="joy" hidden><div id="knob" class="knob"></div></div>
+      <div id="ping" class="ping"></div>
+      <div id="rotate" class="rotate-hint" hidden>Gira tu teléfono para ver mejor la oficina</div>
+    </div>
+
+    <div id="results" class="overlay" hidden>
+      <div class="card results-card">
+        <h2 id="res-title">¡Ganaste!</h2>
+        <p id="res-sub" class="sub"></p>
+        <div class="res-scores">
+          <div class="rs p0"><span id="res-n0" class="nm"></span><b id="res-s0">0</b></div>
+          <div class="vs">VS</div>
+          <div class="rs p1"><span id="res-n1" class="nm"></span><b id="res-s1">0</b></div>
+        </div>
+        <button id="btn-rematch" class="btn btn-primary">Revancha</button>
+        <button id="btn-exit" class="btn btn-ghost">Salir al menú</button>
+        <p id="res-wait" class="msg" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" hidden></div>
+</div>
+
+<script src="shared.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

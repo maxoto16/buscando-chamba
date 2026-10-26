@@ -1,0 +1,22 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch();
+  const mk = async () => { const c = await b.newContext({ viewport: { width: 1280, height: 800 } }); const p = await c.newPage(); p.on('pageerror', e => console.log('PAGEERR', e.message)); p.on('console', m => m.type()==='error' && console.log('CONSOLE', m.text())); return p; };
+  const a = await mk(), c = await mk();
+  const url = 'http://localhost:3200/';
+  await a.goto(url); await a.screenshot({ path: 'shots/1-menu.png' });
+  await a.fill('#name', 'Angel'); await a.click('#btn-create');
+  await a.waitForSelector('#screen-wait:not([hidden])');
+  const code = (await a.textContent('#code-big')).trim(); console.log('code', code);
+  await a.screenshot({ path: 'shots/2-wait.png' });
+  await c.goto(url + '?sala=' + code); await c.fill('#name', 'Rival'); await c.click('#btn-join');
+  await a.waitForSelector('#screen-game:not([hidden])'); await c.waitForSelector('#screen-game:not([hidden])');
+  await a.waitForTimeout(500); await a.screenshot({ path: 'shots/3-countdown.png' });
+  await a.waitForTimeout(3500);
+  await a.keyboard.down('ArrowUp'); await a.waitForTimeout(900); await a.keyboard.up('ArrowUp');
+  await a.keyboard.down('ArrowRight'); await a.waitForTimeout(1500); await a.keyboard.up('ArrowRight');
+  await c.keyboard.down('ArrowLeft'); await c.waitForTimeout(1200); await c.keyboard.up('ArrowLeft');
+  await a.screenshot({ path: 'shots/4-play.png' });
+  console.log('me', JSON.stringify(await a.evaluate(() => ({x: __BC.G.me.x, y: __BC.G.me.y, st: __BC.G.status, papers: __BC.G.papers.length}))));
+  await b.close();
+})();
